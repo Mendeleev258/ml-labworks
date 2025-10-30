@@ -6,7 +6,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 
 # путь к датасету
-data_file_path = 'car_sales_data.csv'
+data_file_path = 'lab-1/car_sales_data.csv'
 
 # прочитать данные в переменную типа DataFrame
 cars_data = pd.read_csv(data_file_path)
@@ -42,39 +42,45 @@ X = cars_data[features]
 
 print("\nПризнаки после кодирования:")
 print(X.head())
+print("\nЦелевая переменная (Price):")
+print(y.head())
 
-# Определяем модель
+# РАЗДЕЛЯЕМ ДАННЫЕ ДО ОБУЧЕНИЯ
+train_X, test_X, train_y, test_y = train_test_split(X, y, test_size=0.3, random_state=1)
+
+print(f"\nРазмер тренировочной выборки: {train_X.shape}")
+print(f"Размер тестовой выборки: {test_X.shape}")
+
+# Определяем и обучаем модель на тренировочных данных
 cars_model = DecisionTreeRegressor(random_state=1)
-
-# Обучаем модель
-cars_model.fit(X, y)
-
-print("\nПрогноз будет составлен для 5 первых записей:")
-print(X.head())
-print("Прогноз:")
-print(cars_model.predict(X.head()))
-print("Реальные данные:")
-print(y.head().values)
-
-from sklearn.metrics import mean_absolute_error
-
-predicted_car_prices = cars_model.predict(X)
-print("\nMAE на всех данных: %d" % mean_absolute_error(y, predicted_car_prices))
-
-# разделяем данные на тренировочный и тестовый набор
-train_X, val_X, train_y, val_y = train_test_split(X, y, random_state=0)
-
-# определяем модель
-cars_model = DecisionTreeRegressor(max_leaf_nodes=10, random_state=0)
-
-# обучаем модель
 cars_model.fit(train_X, train_y)
 
-# получаем среднюю абсолютную ошибку
-val_predictions = cars_model.predict(val_X)
-print("MAE на тестовых данных: %d" % mean_absolute_error(val_y, val_predictions))
+print("\n" + "="*50)
+print("ПРОГНОЗ НА ТЕСТОВЫХ ДАННЫХ (которые модель не видела):")
+print("="*50)
 
-# функция для подсчета средней абсолютной ошибки на заданных данных для заданной глубины дерева
+print("\nПервые 5 записей тестовой выборки:")
+print(test_X.head())
+print("\nПрогноз цен:")
+test_predictions = cars_model.predict(test_X.head())
+print(test_predictions)
+print("\nРеальные цены:")
+print(test_y.head().values)
+
+# Считаем ошибку на тестовых данных
+test_mae = mean_absolute_error(test_y, cars_model.predict(test_X))
+print(f"\nMAE на тестовых данных: {test_mae:.2f}")
+
+# Для сравнения - MAE на тренировочных данных
+train_predictions = cars_model.predict(train_X)
+train_mae = mean_absolute_error(train_y, train_predictions)
+print(f"MAE на тренировочных данных: {train_mae:.2f}")
+
+print("\n" + "="*50)
+print("ОПТИМИЗАЦИЯ ПАРАМЕТРОВ ДЕРЕВА РЕШЕНИЙ")
+print("="*50)
+
+# Функция для подсчета средней абсолютной ошибки
 def get_mae(max_leaf_nodes, train_X, val_X, train_y, val_y):
     model = DecisionTreeRegressor(max_leaf_nodes=max_leaf_nodes, random_state=0)
     model.fit(train_X, train_y)
@@ -82,14 +88,52 @@ def get_mae(max_leaf_nodes, train_X, val_X, train_y, val_y):
     mae = mean_absolute_error(val_y, preds_val)
     return mae
 
-# сравнение MAE для разной глубины дерева
-print("\nСравнение MAE для разных глубин дерева:")
-for max_leaf_nodes in [5, 50, 500, 5000]:
-    my_mae = get_mae(max_leaf_nodes, train_X, val_X, train_y, val_y)
-    print("Макс. листьев: %d  \t\t MAE:  %d" % (max_leaf_nodes, my_mae))
+# Создаем отдельную валидационную выборку для подбора параметров
+train_X2, val_X, train_y2, val_y = train_test_split(train_X, train_y, test_size=0.25, random_state=0)
 
-# случайный лес
-forest_model = RandomForestRegressor(random_state=1)
+print("\nСравнение MAE для разных глубин дерева (на валидационной выборке):")
+best_mae = float('inf')
+best_depth = 0
+
+for max_leaf_nodes in [5, 10, 20, 50, 100, 200, 500]:
+    my_mae = get_mae(max_leaf_nodes, train_X2, val_X, train_y2, val_y)
+    print("Макс. листьев: %d  \t\t MAE:  %.2f" % (max_leaf_nodes, my_mae))
+    
+    if my_mae < best_mae:
+        best_mae = my_mae
+        best_depth = max_leaf_nodes
+
+print(f"\nЛучший параметр: max_leaf_nodes = {best_depth} с MAE = {best_mae:.2f}")
+
+# Обучаем модель с лучшими параметрами на всех тренировочных данных
+best_tree_model = DecisionTreeRegressor(max_leaf_nodes=best_depth, random_state=1)
+best_tree_model.fit(train_X, train_y)
+
+# Тестируем на тестовых данных
+best_tree_predictions = best_tree_model.predict(test_X)
+best_tree_mae = mean_absolute_error(test_y, best_tree_predictions)
+print(f"\nMAE лучшего дерева на тестовых данных: {best_tree_mae:.2f}")
+
+print("\n" + "="*50)
+print("МОДЕЛЬ СЛУЧАЙНОГО ЛЕСА")
+print("="*50)
+
+# Случайный лес
+forest_model = RandomForestRegressor(n_estimators=100, random_state=1)
 forest_model.fit(train_X, train_y)
-forest_preds = forest_model.predict(val_X)
-print("\nMAE RandomForest: %d" % mean_absolute_error(val_y, forest_preds))
+
+forest_train_predictions = forest_model.predict(train_X)
+forest_train_mae = mean_absolute_error(train_y, forest_train_predictions)
+print(f"MAE RandomForest на тренировочных данных: {forest_train_mae:.2f}")
+
+forest_test_predictions = forest_model.predict(test_X)
+forest_test_mae = mean_absolute_error(test_y, forest_test_predictions)
+print(f"MAE RandomForest на тестовых данных: {forest_test_mae:.2f}")
+
+print("\n" + "="*50)
+print("СРАВНЕНИЕ МОДЕЛЕЙ")
+print("="*50)
+
+print(f"Decision Tree (простой) тест MAE: {test_mae:.2f}")
+print(f"Decision Tree (оптимизированный) тест MAE: {best_tree_mae:.2f}")
+print(f"Random Forest тест MAE: {forest_test_mae:.2f}")
