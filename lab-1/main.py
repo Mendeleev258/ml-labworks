@@ -135,5 +135,4 @@ print("СРАВНЕНИЕ МОДЕЛЕЙ")
 print("="*50)
 
 print(f"Decision Tree (простой) тест MAE: {test_mae:.2f}")
-print(f"Decision Tree (оптимизированный) тест MAE: {best_tree_mae:.2f}")
 print(f"Random Forest тест MAE: {forest_test_mae:.2f}")
