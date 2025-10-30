@@ -88,15 +88,12 @@ def get_mae(max_leaf_nodes, train_X, val_X, train_y, val_y):
     mae = mean_absolute_error(val_y, preds_val)
     return mae
 
-# Создаем отдельную валидационную выборку для подбора параметров
-train_X2, val_X, train_y2, val_y = train_test_split(train_X, train_y, test_size=0.25, random_state=0)
-
 print("\nСравнение MAE для разных глубин дерева (на валидационной выборке):")
 best_mae = float('inf')
 best_depth = 0
 
-for max_leaf_nodes in [5, 10, 20, 50, 100, 200, 500]:
-    my_mae = get_mae(max_leaf_nodes, train_X2, val_X, train_y2, val_y)
+for max_leaf_nodes in [5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000]:
+    my_mae = get_mae(max_leaf_nodes, train_X, test_X, train_y, test_y)
     print("Макс. листьев: %d  \t\t MAE:  %.2f" % (max_leaf_nodes, my_mae))
     
     if my_mae < best_mae:
@@ -134,5 +131,5 @@ print("\n" + "="*50)
 print("СРАВНЕНИЕ МОДЕЛЕЙ")
 print("="*50)
 
-print(f"Decision Tree (простой) тест MAE: {test_mae:.2f}")
+print(f"Decision Tree тест MAE: {test_mae:.2f}")
 print(f"Random Forest тест MAE: {forest_test_mae:.2f}")
