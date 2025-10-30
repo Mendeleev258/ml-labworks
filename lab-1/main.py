@@ -102,15 +102,6 @@ for max_leaf_nodes in [5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20
 
 print(f"\nЛучший параметр: max_leaf_nodes = {best_depth} с MAE = {best_mae:.2f}")
 
-# Обучаем модель с лучшими параметрами на всех тренировочных данных
-best_tree_model = DecisionTreeRegressor(max_leaf_nodes=best_depth, random_state=1)
-best_tree_model.fit(train_X, train_y)
-
-# Тестируем на тестовых данных
-best_tree_predictions = best_tree_model.predict(test_X)
-best_tree_mae = mean_absolute_error(test_y, best_tree_predictions)
-print(f"\nMAE лучшего дерева на тестовых данных: {best_tree_mae:.2f}")
-
 print("\n" + "="*50)
 print("МОДЕЛЬ СЛУЧАЙНОГО ЛЕСА")
 print("="*50)
