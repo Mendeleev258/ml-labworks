@@ -6,7 +6,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 
 # путь к датасету
-data_file_path = 'lab-1/car_sales_data.csv'
+data_file_path = 'car_sales_data.csv'
 
 # прочитать данные в переменную типа DataFrame
 cars_data = pd.read_csv(data_file_path)
