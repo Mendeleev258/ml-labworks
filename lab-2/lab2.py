@@ -12,7 +12,7 @@ import warnings
 warnings.filterwarnings('ignore')
 
 # 1. Читаем данные из датасета
-df = pd.read_csv('car_sales_data.csv')
+df = pd.read_csv('car_sales_data_with_missing.csv')
 
 # 2. Выбираем столбец для прогнозирования (y)
 y = df['Price']
